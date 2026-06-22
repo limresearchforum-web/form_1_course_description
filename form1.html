@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="my">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Online Training Form">
+<title>သင်တန်းဒေတာ</title>
+
+<!-- EmailJS -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<script>
+  (function(){
+    emailjs.init("YOUR_PUBLIC_KEY");
+  })();
+</script>
+
+<style>
+body {
+  font-family: "Myanmar3", "Myanmar Text", "Pyidaungsu", sans-serif;
+  font-size: 16px;
+  margin: 0;
+  background: #f2f2f2;
+}
+
+.form-container {
+  width: 210mm;
+  min-height: 297mm;
+  margin: auto;
+  background: #fff;
+  padding: 20mm;
+}
+
+h2, h3 {
+  text-align: center;
+}
+
+label {
+  display: block;
+  margin-top: 12px;
+  font-weight: bold;
+}
+
+input, select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 6px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+}
+
+.row > div {
+  flex: 1;
+}
+
+.item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.item span {
+  flex: 2;
+}
+
+.item select, .item input {
+  flex: 2;
+  padding: 8px;
+}
+
+.button-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.btn {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #fff;
+}
+
+.btn-submit { background: #d32f2f; }
+.btn-save { background: #1976d2; }
+
+.result {
+  margin-top: 20px;
+  padding: 12px;
+  background: #e8f5e9;
+  display: none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="form-container">
+
+<h2>သင်တန်းဒေတာ</h2>
+
+<form id="trainingForm">
+
+<!-- BASIC -->
+<label>သင်တန်းခေါင်းစဉ်</label>
+<input type="text" id="name">
+
+<label>နယ်ပယ်</label>
+<select id="field">
+  <option value="">ရွေးချယ်ပါ</option>
+  <option>ကွန်ပြူတာ</option>
+  <option>နည်းပညာ</option>
+</select>
+
+<label>အဆင့်</label>
+<select id="level">
+  <option value="">ရွေးချယ်ပါ</option>
+  <option>အခြေခံ</option>
+  <option>အလယ်အလတ်</option>
+  <option>အဆင့်မြင့်</option>
+</select>
+
+<!-- TYPE (FIXED ID) -->
+<label>အမျိုးအစား</label>
+<select id="courseType">
+  <option value="">ရွေးချယ်ပါ</option>
+  <option>ကာလတို</option>
+  <option>ကာလရှည်</option>
+</select>
+
+<!-- REQUIREMENTS -->
+<h3>လိုအပ်ချက်များ</h3>
+
+<div class="item">
+  <span>Quiz</span>
+  <select onchange="togglePercent('quiz', this)">
+    <option value="">ရွေးချယ်ပါ</option>
+    <option>ရှိ</option>
+    <option>မရှိ</option>
+  </select>
+
+  <select id="quizPercent" style="display:none;">
+    <option value="">%</option>
+    <script>
+      for(let i=1;i<=100;i++){
+        document.write(`<option>${i}</option>`);
+      }
+    </script>
+  </select>
+</div>
+
+<div class="item">
+  <span>Assignment</span>
+  <select onchange="togglePercent('assignment', this)">
+    <option value="">ရွေးချယ်ပါ</option>
+    <option>ရှိ</option>
+    <option>မရှိ</option>
+  </select>
+
+  <select id="assignmentPercent" style="display:none;">
+    <option value="">%</option>
+    <script>
+      for(let i=1;i<=100;i++){
+        document.write(`<option>${i}</option>`);
+      }
+    </script>
+  </select>
+</div>
+
+<!-- DATE -->
+<h3>သင်တန်းကာလ</h3>
+
+<div class="row">
+  <input type="date" id="startDate">
+  <input type="date" id="endDate">
+</div>
+
+<!-- BUTTONS -->
+<div class="button-row">
+  <button type="button" class="btn btn-submit" onclick="submitForm()">တင်သွင်းမည်</button>
+  <button type="button" class="btn btn-save" onclick="saveTemp()">ယာယီသိမ်းမည်</button>
+</div>
+
+</form>
+
+<div class="result" id="resultBox"></div>
+
+</div>
+
+<script>
+
+// FIXED TOGGLE
+function togglePercent(type, el){
+  let box = document.getElementById(type+"Percent");
+  box.style.display = (el.value==="ရှိ") ? "inline-block" : "none";
+  if(el.value!=="ရှိ") box.value="";
+}
+
+// GET DATA
+function getData(){
+  return {
+    name: name.value,
+    field: field.value,
+    level: level.value,
+    type: courseType.value,
+    start: startDate.value,
+    end: endDate.value
+  };
+}
+
+// TEMP SAVE (EMAILJS)
+function saveTemp(){
+
+  let email = prompt("Email ထည့်ပါ");
+  if(!email) return;
+
+  let d = getData();
+
+  emailjs.send("YOUR_SERVICE_ID","YOUR_TEMPLATE_ID",{
+    to_email: email,
+    message:
+    `သင်တန်း: ${d.name}
+နယ်ပယ်: ${d.field}
+အဆင့်: ${d.level}
+အမျိုးအစား: ${d.type}
+စတင်: ${d.start}
+ပြီးဆုံး: ${d.end}`
+  });
+
+  alert("Email ပို့ပြီးပါပြီ");
+}
+
+// SUBMIT
+function submitForm(){
+
+  let d = getData();
+
+  if(!d.name || !d.field || !d.level){
+    alert("အချက်အလက်များဖြည့်ပါ");
+    return;
+  }
+
+  resultBox.style.display="block";
+  resultBox.innerHTML =
+  `✔ ${d.name}<br>
+   ✔ ${d.field}<br>
+   ✔ ${d.level}<br>
+   ✔ ${d.type}<br>
+   ✔ ${d.start} - ${d.end}`;
+}
+
+</script>
+
+</body>
+</html>
